@@ -23,20 +23,28 @@ def getString(buff, offset):
 
 def decodeConfigAnswer(data):
 
+  config = {}
+  
   controlerID, offset = getSome("I", data, 0)
   print("controlerID: {}".format(controlerID))
+  config['controlerID'] = controlerID
 
-  minSetPoint, offset = getSome("B", data, offset)
-  print("minSetPoint: {}".format(minSetPoint))
-  maxSetPoint, offset = getSome("B", data, offset)
-  print("maxSetPoint: {}".format(maxSetPoint))
-  minSetPoint, offset = getSome("B", data, offset)
-  print("minSetPoint: {}".format(minSetPoint))
-  maxSetPoint, offset = getSome("B", data, offset)
-  print("maxSetPoint: {}".format(maxSetPoint))
+  minSetPoint1, offset = getSome("B", data, offset)
+  print("minSetPoint1: {}".format(minSetPoint1))
+  maxSetPoint1, offset = getSome("B", data, offset)
+  print("maxSetPoint1: {}".format(maxSetPoint1))
+  minSetPoint2, offset = getSome("B", data, offset)
+  print("minSetPoint2: {}".format(minSetPoint2))
+  maxSetPoint2, offset = getSome("B", data, offset)
+  print("maxSetPoint2: {}".format(maxSetPoint2))
+
+  config['minSetPoint'] = [minSetPoint1, minSetPoint2]
+  config['maxSetPoint'] = [maxSetPoint1, maxSetPoint2]
 
   degC, offset = getSome("B", data, offset)
   print("degC: {}".format(degC != 0))
+  config['degC'] = (degC != 0)
+  
   controllerType, offset = getSome("B", data, offset)
   print("controllerType: {}".format(controllerType))
   hwType, offset = getSome("B", data, offset)
@@ -46,34 +54,44 @@ def decodeConfigAnswer(data):
   equipFlags, offset = getSome("i", data, offset)
   print("equipFlags: {}".format(equipFlags))
 
-  #offset = offset + struct.calcsize("2B")
-  #sLen, offset = getSome("I", data, offset)
-  #print(sLen)
-  genCircuitName, offset = getString(data, offset)#"255s", data, offset)#
-  print("genCircuitName: {}".format(genCircuitName.decode("utf-8")))
-
-  #offset = offset + struct.calcsize("2B")
-
+  paddedGenName, offset = getString(data, offset)
+  genCircuitName = paddedGenName.decode("utf-8").strip('\0')
+  print("genCircuitName: {}".format(genCircuitName))
+  config['genericCircuitName'] = genCircuitName
+         
   circuitCount , offset = getSome("I", data, offset)
   print("circuitCount : {}".format(circuitCount))
+  config['circuitCount'] = circuitCount
+         
+  circuitID = np.zeros(circuitCount, dtype=int)
+  circuitName = ["" for x in range(circuitCount)]
+  cNameIndex = np.zeros(circuitCount, dtype=int)
+  cFunction = np.zeros(circuitCount, dtype=int)
+  cInterface = np.zeros(circuitCount, dtype=int)
+  cFlags = np.zeros(circuitCount, dtype=int)
+  cColorSet = np.zeros(circuitCount, dtype=int)
+  cColorPos = np.zeros(circuitCount, dtype=int)
+  cColorStagger = np.zeros(circuitCount, dtype=int)
+  cDeviceID = np.zeros(circuitCount, dtype=int)
+  cDefaultRT = np.zeros(circuitCount, dtype=int)
 
-  circuitID = np.zeros(circuitCount+1, dtype=int)
-  circuitName = ["" for x in range(circuitCount+1)]
-  cNameIndex = np.zeros(circuitCount+1, dtype=int)
-  cFunction = np.zeros(circuitCount+1, dtype=int)
-  cInterface = np.zeros(circuitCount+1, dtype=int)
-  cFlags = np.zeros(circuitCount+1, dtype=int)
-  cColorSet = np.zeros(circuitCount+1, dtype=int)
-  cColorPos = np.zeros(circuitCount+1, dtype=int)
-  cColorStagger = np.zeros(circuitCount+1, dtype=int)
-  cDeviceID = np.zeros(circuitCount+1, dtype=int)
-  cDefaultRT = np.zeros(circuitCount+1, dtype=int)
-
+  config['circuits'] = {}
+  config['circuits']['names'] = {}
+  config['circuits']['data'] = [{} for x in range(circuitCount)]
+         
   for i in range(circuitCount):
+    circuit = {}
     circuitID[i], offset = getSome("i", data, offset)
     print("  circuitID[{}]: {}".format(i, circuitID[i]))
-    circuitName[i], offset = getString(data, offset)#"255s", data, offset)#
-    print("  circuitName[{}]: {}".format(i, circuitName[i].decode("utf-8").strip('\0')))
+    config['circuits']['data'][i]['id'] = circuitID[i]
+    
+    paddedName, offset = getString(data, offset)
+    circuitName[i] = paddedName.decode("utf-8").strip('\0')
+    print("  circuitName[{}]: {}".format(i, circuitName[i]))
+    config['circuits']['data'][i]['name'] = circuitName[i]
+
+    config['circuits']['names']['%s' % circuitID[i]] = circuitName[i]
+
     cNameIndex[i], offset = getSome("B", data, offset)
     print("  cNameIndex[{}]: {}".format(i, cNameIndex[i]))
     cFunction[i], offset = getSome("B", data, offset)
@@ -97,21 +115,26 @@ def decodeConfigAnswer(data):
 
   colorCount , offset = getSome("I", data, offset)
   print("colorCount : {}".format(colorCount))
-
+  config['colorCount'] = colorCount
+  
   colorName = ["" for x in range(colorCount)]
-  rgbR = np.zeros(circuitCount+1, dtype=int)
-  rgbG = np.zeros(circuitCount+1, dtype=int)
-  rgbB = np.zeros(circuitCount+1, dtype=int)
-
+  rgbR = np.zeros(circuitCount, dtype=int)
+  rgbG = np.zeros(circuitCount, dtype=int)
+  rgbB = np.zeros(circuitCount, dtype=int)
+  config['colors'] = {} #[{} for x in range(colorCount)]
+  
   for i in range(colorCount):
-    colorName[i], offset = getString(data, offset)#"255s", data, offset)#
-    print("  colorName[{}]: {}".format(i, colorName[i].decode("utf-8").strip('\0')))
+    paddedColorName, offset = getString(data, offset)
+    colorName[i] = paddedColorName.decode("utf-8").strip('\0')
+    print("  colorName[{}]: {}".format(i, colorName[i]))
     rgbR[i], offset = getSome("I", data, offset)
     print("  rgbR[{}]: {}".format(i, rgbR[i]))
     rgbG[i], offset = getSome("I", data, offset)
     print("  rgbG[{}]: {}".format(i, rgbG[i]))
     rgbB[i], offset = getSome("I", data, offset)
     print("  rgbB[{}]: {}".format(i, rgbB[i]))
+    config['colors']['%s' % colorName[i]] = [ rgbR[i], rgbG[i], rgbB[i]]
+    
     print()
 
   next1 , offset = getSome("I", data, offset)
@@ -120,6 +143,7 @@ def decodeConfigAnswer(data):
   print("next2 : {}".format(next2))
   next3 , offset = getSome("I", data, offset)
   print("next3 : {}".format(next3))
+  next4 , offset = getSome("I", data, offset)
+  print("next4 : {}".format(next4))
 
-  remainder, offset = getSome("I", data, offset)
-  print("remainder: {}".format(remainder))
+  return config
