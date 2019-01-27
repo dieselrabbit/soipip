@@ -82,6 +82,61 @@ def decodeStatusAnswer(data):
   
   circuitCount, offset = getSome("I", data, offset)
   print("circuitCount: {}".format(circuitCount))
+  print()
+  circuitName = ["" for x in range(circuitCount+1)]
+
+  circuitID  = np.zeros(circuitCount+1, dtype=int)
+  circuitState  = np.zeros(circuitCount+1, dtype=int)
+  circuitColorSet  = np.zeros(circuitCount+1, dtype=int)
+  circuitColorPos  = np.zeros(circuitCount+1, dtype=int)
+  circuitColorStagger  = np.zeros(circuitCount+1, dtype=int)
+  circuitDelay  = np.zeros(circuitCount+1, dtype=int)
+
+  for i in range(circuitCount):
+    circuitID[i], offset = getSome("I", data, offset)
+    print("  circuitID: {}".format(circuitID[i]))
+
+    circuitState[i], offset = getSome("I", data, offset)
+    print("  circuitState: {}".format(circuitState[i]))
+    
+    circuitColorSet[i], offset = getSome("B", data, offset)
+    print("  circuitColorSet: {}".format(circuitColorSet[i]))
+
+    circuitColorPos[i], offset = getSome("B", data, offset)
+    print("  circuitColorPos: {}".format(circuitColorPos[i]))
+
+    circuitColorStagger[i], offset = getSome("B", data, offset)
+    print("  circuitColorStagger: {}".format(circuitColorStagger[i]))
+
+    circuitDelay[i], offset = getSome("B", data, offset)
+    print("  circuitDelay: {}".format(circuitDelay[i]))
+    print()
+    #if(circuitID not in range(circuitCount)):
+    #circuitID = 0
+
+    #circuitName[i], offset = getSome("s", data, offset)
+    #print("  circuitName[{}]: {}".format(circuitID, circuitName[i]))
+
+  pH, offset = getSome("i", data, offset)
+  print("pH: {}".format(pH / 100))
+  
+  orp, offset = getSome("i", data, offset)
+  print("orp: {}".format(orp))
+
+  saturation, offset = getSome("i", data, offset)
+  print("saturation: {}".format(saturation / 100))
+
+  saltPPM, offset = getSome("i", data, offset)
+  print("saltPPM: {}".format(saltPPM))
+
+  pHTank, offset = getSome("i", data, offset)
+  print("pHTank: {}".format(pHTank))
+
+  orpTank, offset = getSome("i", data, offset)
+  print("orpTank: {}".format(orpTank))
+
+  alarms, offset = getSome("i", data, offset)
+  print("alarms: {}".format(alarms))
 
   # ok, this is enough. my brain hurts. if i was in charge i'd make every single one of these their
   # own pool message rather than have this monolithic datastructure. however, nobody asked me my 

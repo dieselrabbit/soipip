@@ -5,14 +5,18 @@
 
 # puts everything together. broadcasts for a gateway and then queries it.
 
-import findGateway
+import discoverGateway
+import gatewayLogin
 import doQuery
+import socket
 from constants import me
 
 if __name__ == "__main__":
-  verbose = False
-  gatewayIP, gatewayPort, gatewayType, gatewaySubtype, gatewayName, okchk = findGateway.findGateway(verbose)
+  verbose = True
+  gatewayIP, gatewayPort, gatewayType, gatewaySubtype, gatewayName, okchk = discoverGateway.discoverGateway(verbose)
   if(gatewayIP):
-    doQuery.queryGateway(gatewayIP, gatewayPort)
+    tcpSock = gatewayLogin.gatewayLogin(gatewayIP, gatewayPort)
+    doQuery.queryGateway(tcpSock)
+    tcpSock.close()
   else:
     print("INFO: {}: could not find a gateway on this subnet.".format(me()))
