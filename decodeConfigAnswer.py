@@ -12,12 +12,10 @@ def getString(buff, offset):
   fmtLen = "<I"
   offsetLen = offset + struct.calcsize(fmtLen)
   sLen = struct.unpack_from(fmtLen, buff, offset)[0]
-  #print(sLen)
   if sLen % 4 != 0:
       sLen += 4 - sLen % 4
   
   fmt = "<{}{}".format(sLen, "s")
-  #print(fmt)
   newoffset = offsetLen + struct.calcsize(fmt)
   return struct.unpack_from(fmt, buff, offsetLen)[0], newoffset
 
@@ -26,41 +24,41 @@ def decodeConfigAnswer(data):
   config = {}
   
   controlerID, offset = getSome("I", data, 0)
-  print("controlerID: {}".format(controlerID))
+  #print("controlerID: {}".format(controlerID))
   config['controlerID'] = controlerID
 
   minSetPoint1, offset = getSome("B", data, offset)
-  print("minSetPoint1: {}".format(minSetPoint1))
+  #print("minSetPoint1: {}".format(minSetPoint1))
   maxSetPoint1, offset = getSome("B", data, offset)
-  print("maxSetPoint1: {}".format(maxSetPoint1))
+  #print("maxSetPoint1: {}".format(maxSetPoint1))
   minSetPoint2, offset = getSome("B", data, offset)
-  print("minSetPoint2: {}".format(minSetPoint2))
+  #print("minSetPoint2: {}".format(minSetPoint2))
   maxSetPoint2, offset = getSome("B", data, offset)
-  print("maxSetPoint2: {}".format(maxSetPoint2))
+  #print("maxSetPoint2: {}".format(maxSetPoint2))
 
   config['minSetPoint'] = [minSetPoint1, minSetPoint2]
   config['maxSetPoint'] = [maxSetPoint1, maxSetPoint2]
 
   degC, offset = getSome("B", data, offset)
-  print("degC: {}".format(degC != 0))
+  #print("degC: {}".format(degC != 0))
   config['degC'] = (degC != 0)
   
   controllerType, offset = getSome("B", data, offset)
-  print("controllerType: {}".format(controllerType))
+  #print("controllerType: {}".format(controllerType))
   hwType, offset = getSome("B", data, offset)
-  print("hwType: {}".format(hwType))
+  #print("hwType: {}".format(hwType))
   controllerData, offset = getSome("B", data, offset)
-  print("controllerData: {}".format(controllerData))
+  #print("controllerData: {}".format(controllerData))
   equipFlags, offset = getSome("i", data, offset)
-  print("equipFlags: {}".format(equipFlags))
+  #print("equipFlags: {}".format(equipFlags))
 
   paddedGenName, offset = getString(data, offset)
   genCircuitName = paddedGenName.decode("utf-8").strip('\0')
-  print("genCircuitName: {}".format(genCircuitName))
+  #print("genCircuitName: {}".format(genCircuitName))
   config['genericCircuitName'] = genCircuitName
          
   circuitCount , offset = getSome("I", data, offset)
-  print("circuitCount : {}".format(circuitCount))
+  #print("circuitCount : {}".format(circuitCount))
   config['circuitCount'] = circuitCount
          
   circuitID = np.zeros(circuitCount, dtype=int)
@@ -82,39 +80,39 @@ def decodeConfigAnswer(data):
   for i in range(circuitCount):
     circuit = {}
     circuitID[i], offset = getSome("i", data, offset)
-    print("  circuitID[{}]: {}".format(i, circuitID[i]))
+    #print("  circuitID[{}]: {}".format(i, circuitID[i]))
     config['circuits']['data'][i]['id'] = circuitID[i]
     
     paddedName, offset = getString(data, offset)
     circuitName[i] = paddedName.decode("utf-8").strip('\0')
-    print("  circuitName[{}]: {}".format(i, circuitName[i]))
+    #print("  circuitName[{}]: {}".format(i, circuitName[i]))
     config['circuits']['data'][i]['name'] = circuitName[i]
 
     config['circuits']['names']['%s' % circuitID[i]] = circuitName[i]
 
     cNameIndex[i], offset = getSome("B", data, offset)
-    print("  cNameIndex[{}]: {}".format(i, cNameIndex[i]))
+    #print("  cNameIndex[{}]: {}".format(i, cNameIndex[i]))
     cFunction[i], offset = getSome("B", data, offset)
-    print("  cFunction[{}]: {}".format(i, cFunction[i]))
+    #print("  cFunction[{}]: {}".format(i, cFunction[i]))
     cInterface[i], offset = getSome("B", data, offset)
-    print("  cInterface[{}]: {}".format(i, cInterface[i]))
+    #print("  cInterface[{}]: {}".format(i, cInterface[i]))
     cFlags[i], offset = getSome("B", data, offset)
-    print("  cFlags[{}]: {}".format(i, cFlags[i]))
+    #print("  cFlags[{}]: {}".format(i, cFlags[i]))
     cColorSet[i], offset = getSome("B", data, offset)
-    print("  cColorSet[{}]: {}".format(i, cColorSet[i]))
+    #print("  cColorSet[{}]: {}".format(i, cColorSet[i]))
     cColorPos[i], offset = getSome("B", data, offset)
-    print("  cColorPos[{}]: {}".format(i, cColorPos[i]))
+    #print("  cColorPos[{}]: {}".format(i, cColorPos[i]))
     cColorStagger[i], offset = getSome("B", data, offset)
-    print("  cColorStagger[{}]: {}".format(i, cColorStagger[i]))
+    #print("  cColorStagger[{}]: {}".format(i, cColorStagger[i]))
     cDeviceID[i], offset = getSome("B", data, offset)
-    print("  cDeviceID[{}]: {}".format(i, cDeviceID[i]))
+    #print("  cDeviceID[{}]: {}".format(i, cDeviceID[i]))
     cDefaultRT[i], offset = getSome("H", data, offset)
-    print("  cDefaultRT[{}]: {}".format(i, cDefaultRT[i]))
-    print()
+    #print("  cDefaultRT[{}]: {}".format(i, cDefaultRT[i]))
+    #print()
     offset = offset + struct.calcsize("2B")
 
   colorCount , offset = getSome("I", data, offset)
-  print("colorCount : {}".format(colorCount))
+  #print("colorCount : {}".format(colorCount))
   config['colorCount'] = colorCount
   
   colorName = ["" for x in range(colorCount)]
@@ -126,24 +124,24 @@ def decodeConfigAnswer(data):
   for i in range(colorCount):
     paddedColorName, offset = getString(data, offset)
     colorName[i] = paddedColorName.decode("utf-8").strip('\0')
-    print("  colorName[{}]: {}".format(i, colorName[i]))
+    #print("  colorName[{}]: {}".format(i, colorName[i]))
     rgbR[i], offset = getSome("I", data, offset)
-    print("  rgbR[{}]: {}".format(i, rgbR[i]))
+    #print("  rgbR[{}]: {}".format(i, rgbR[i]))
     rgbG[i], offset = getSome("I", data, offset)
-    print("  rgbG[{}]: {}".format(i, rgbG[i]))
+    #print("  rgbG[{}]: {}".format(i, rgbG[i]))
     rgbB[i], offset = getSome("I", data, offset)
-    print("  rgbB[{}]: {}".format(i, rgbB[i]))
+    #print("  rgbB[{}]: {}".format(i, rgbB[i]))
     config['colors']['%s' % colorName[i]] = [ rgbR[i], rgbG[i], rgbB[i]]
     
-    print()
+    #print()
 
-  next1 , offset = getSome("I", data, offset)
-  print("next1 : {}".format(next1))
-  next2 , offset = getSome("I", data, offset)
-  print("next2 : {}".format(next2))
-  next3 , offset = getSome("I", data, offset)
-  print("next3 : {}".format(next3))
-  next4 , offset = getSome("I", data, offset)
-  print("next4 : {}".format(next4))
+  pump1 , offset = getSome("I", data, offset)
+  #print("pump1 : {}".format(pump1))
+  pump2 , offset = getSome("I", data, offset)
+  #print("pump2 : {}".format(pump2))
+  pump3 , offset = getSome("I", data, offset)
+  #print("pump3 : {}".format(pump3))
+  pump4 , offset = getSome("I", data, offset)
+  #print("pump4 : {}".format(pump4))
 
   return config
