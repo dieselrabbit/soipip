@@ -1,152 +1,100 @@
-import struct
-import numpy as np
+from decodeData import getSome, getString
 
-def getSome(want, buff, offset):
-  fmt = "<" + want
-  newoffset = offset + struct.calcsize(fmt)
-  return struct.unpack_from(fmt, buff, offset)[0], newoffset
+def decodeStatusAnswer(buff, data):
 
-def decodeStatusAnswer(data):
-
-  state = {}
+  #{ name="", state= }
+  if('sensors' not in data):
+    data['sensors'] = {}
   
-  ok, offset = getSome("I", data, 0)
-  #print("ok: {}".format(ok))
+  ok, offset = getSome("I", buff, 0)
 
-  freezeMode, offset = getSome("B", data, offset)
-  #print("freezeMode: {}".format(freezeMode))
+  freezeMode, offset = getSome("B", buff, offset)
 
-  remotes, offset = getSome("B", data, offset)
-  #print("remotes: {}".format(remotes))
+  remotes, offset = getSome("B", buff, offset)
 
-  poolDelay, offset = getSome("B", data, offset)
-  #print("poolDelay: {}".format(poolDelay))
+  poolDelay, offset = getSome("B", buff, offset)
 
-  spaDelay, offset = getSome("B", data, offset)
-  #print("spaDelay: {}".format(spaDelay))
+  spaDelay, offset = getSome("B", buff, offset)
 
-  cleanerDelay, offset = getSome("B", data, offset)
-  #print("cleanerDelay: {}".format(cleanerDelay))
+  cleanerDelay, offset = getSome("B", buff, offset)
 
   # fast forward 3 bytes. why? because.
-  #offset = offset + struct.calcsize("3B")
-  ff1, offset = getSome("B", data, offset)
-  #print("fastForward1: {}".format(ff1))
-  ff2, offset = getSome("B", data, offset)
-  #print("fastForward2: {}".format(ff2))
-  ff3, offset = getSome("B", data, offset)
-  #print("fastForward3: {}".format(ff3))
+  ff1, offset = getSome("B", buff, offset)
+  ff2, offset = getSome("B", buff, offset)
+  ff3, offset = getSome("B", buff, offset)
 
-  airTemp, offset = getSome("i", data, offset)
-  #print("airTemp: {}".format(airTemp))
-  state['airTemp'] = airTemp
+  airTemp, offset = getSome("i", buff, offset)
+  data['sensors']['airTemp'] = dict(name="Air Temperature", state=airTemp)
 
-  bodiesCount, offset = getSome("I", data, offset)
+  bodiesCount, offset = getSome("I", buff, offset)
   bodiesCount = min(bodiesCount, 2)
-  #print("bodiesCount: {}".format(bodiesCount))
-  
-  currentTemp  = np.zeros(bodiesCount+1, dtype=int)
-  heatStatus   = np.zeros(bodiesCount+1, dtype=int)
-  heatSetPoint = np.zeros(bodiesCount+1, dtype=int)
-  coolSetPoint = np.zeros(bodiesCount+1, dtype=int)
-  heatMode     = np.zeros(bodiesCount+1, dtype=int)
 
-  state['bodies'] = {}
-  state['bodies']['names'] = {}
-  state['bodies']['data'] = [{} for x in range(bodiesCount)]
+  if('bodies' not in data):
+    data['bodies'] = [{} for x in range(bodiesCount)]
 
   for i in range(bodiesCount):
-    bodyType, offset = getSome("I", data, offset)
+    bodyType, offset = getSome("I", buff, offset)
     if(bodyType not in range(2)): bodyType = 0
+    data['bodies'][i]['bodyType'] = dict(name="Type of body of water", state=bodyType)
 
-    currentTemp[bodyType], offset = getSome("i", data, offset)
-    #print("  currentTemp[{}]: {}".format(bodyType, currentTemp[bodyType]))
-    state['bodies']['data'][i]['currentTemp'] = currentTemp
+    currentTemp, offset = getSome("i", buff, offset)
+    data['bodies'][i]['currentTemp'] = dict(name="Current Temperature", state=currentTemp)
 
-    heatStatus[bodyType], offset = getSome("i", data, offset)
-    #print("  heatStatus[{}]: {}".format(bodyType, heatStatus[bodyType]))
-    state['bodies']['data'][i]['heatStatus'] = heatStatus
+    heatStatus, offset = getSome("i", buff, offset)
+    data['bodies'][i]['heatStatus'] = dict(name="Heater", state=heatStatus)
 
-    heatSetPoint[bodyType], offset = getSome("i", data, offset)
-    #print("  setPoint[{}]: {}".format(bodyType, heatSetPoint[bodyType]))
-    state['bodies']['data'][i]['heatSetPoint'] = heatSetPoint
+    heatSetPoint, offset = getSome("i", buff, offset)
+    data['bodies'][i]['heatSetPoint'] = dict(name="Heat Set Point", state=heatSetPoint)
 
-    coolSetPoint[bodyType], offset = getSome("i", data, offset)
-    #print("  coolSetPoint[{}]: {}".format(bodyType, coolSetPoint[bodyType]))
-    state['bodies']['data'][i]['coolSetPoint'] = coolSetPoint
+    coolSetPoint, offset = getSome("i", buff, offset)
+    data['bodies'][i]['coolSetPoint'] = dict(name="Cool Set Point", state=coolSetPoint)
 
-    heatMode[bodyType], offset = getSome("i", data, offset)
-    #print("  heatMode[{}]: {}".format(bodyType, heatMode[bodyType]))
-    state['bodies']['data'][i]['heatMode'] = heatMode
-    #print("")
+    heatMode, offset = getSome("i", buff, offset)
+    data['bodies'][i]['heatMode'] = dict(name="Heater Mode", state=heatMode)
   
-  circuitCount, offset = getSome("I", data, offset)
-  #print("circuitCount: {}".format(circuitCount))
-  #print()
-  circuitName = ["" for x in range(circuitCount)]
+  circuitCount, offset = getSome("I", buff, offset)
 
-  circuitID  = np.zeros(circuitCount, dtype=int)
-  circuitState  = np.zeros(circuitCount, dtype=int)
-  circuitColorSet  = np.zeros(circuitCount, dtype=int)
-  circuitColorPos  = np.zeros(circuitCount, dtype=int)
-  circuitColorStagger  = np.zeros(circuitCount, dtype=int)
-  circuitDelay  = np.zeros(circuitCount, dtype=int)
-
-  state['circuits'] = {}
-  state['circuits']['states'] = {}
-  state['circuits']['data'] = [{} for x in range(circuitCount)]
+  if('circuits' not in data):
+    data['circuits'] = {}
 
   for i in range(circuitCount):
-    circuitID[i], offset = getSome("I", data, offset)
-    #print("  circuitID: {}".format(circuitID[i]))
-    state['circuits']['data'][i]['id'] = circuitID[i]
+    circuitID, offset = getSome("I", buff, offset)
 
-    circuitState[i], offset = getSome("I", data, offset)
-    #print("  circuitState: {}".format(circuitState[i]))
-    state['circuits']['data'][i]['state'] = circuitState[i]
+    if(circuitID not in data['circuits']):
+      data['circuits'][circuitID] = {}
 
-    state['circuits']['states']['%s' % circuitID[i]] = circuitState[i]
+    if('id' not in data['circuits'][circuitID]):
+      data['circuits'][circuitID]['id'] = circuitID
+
+    circuitstate, offset = getSome("I", buff, offset)
+    data['circuits'][circuitID]['state'] = circuitstate
+ 
+    circuitColorSet, offset = getSome("B", buff, offset)
+    circuitColorPos, offset = getSome("B", buff, offset)
+    circuitColorStagger, offset = getSome("B", buff, offset)
+    circuitDelay, offset = getSome("B", buff, offset)
+
+  if('chemistry' not in data):
+    data['chemistry'] = {}
     
-    circuitColorSet[i], offset = getSome("B", data, offset)
-    #print("  circuitColorSet: {}".format(circuitColorSet[i]))
-
-    circuitColorPos[i], offset = getSome("B", data, offset)
-    #print("  circuitColorPos: {}".format(circuitColorPos[i]))
-
-    circuitColorStagger[i], offset = getSome("B", data, offset)
-    #print("  circuitColorStagger: {}".format(circuitColorStagger[i]))
-
-    circuitDelay[i], offset = getSome("B", data, offset)
-    #print("  circuitDelay: {}".format(circuitDelay[i]))
-    #print()
-
-  state['chemistry'] = {}
-  pH, offset = getSome("i", data, offset)
-  #print("pH: {}".format(pH / 100))
-  state['chemistry']['pH'] = (pH / 100)
+  pH, offset = getSome("i", buff, offset)
+  data['chemistry']['pH'] = dict(name="pH", state=(pH / 100))
   
-  orp, offset = getSome("i", data, offset)
-  #print("orp: {}".format(orp))
-  state['chemistry']['orp'] = orp
+  orp, offset = getSome("i", buff, offset)
+  data['chemistry']['orp'] = dict(name="ORP", state=orp)
 
-  saturation, offset = getSome("i", data, offset)
-  #print("saturation: {}".format(saturation / 100))
-  state['chemistry']['saturation'] = (saturation / 100)
+  saturation, offset = getSome("i", buff, offset)
+  data['chemistry']['saturation'] = dict(name="Saturation Index", state=(saturation / 100))
 
-  saltPPM, offset = getSome("i", data, offset)
-  #print("saltPPM: {}".format(saltPPM))
-  state['chemistry']['saltPPM'] = saltPPM
+  saltPPM, offset = getSome("i", buff, offset)
+  data['chemistry']['saltPPM'] = dict(name="Salt", state=saltPPM)
 
-  pHTank, offset = getSome("i", data, offset)
-  #print("pHTank: {}".format(pHTank))
-  state['chemistry']['pHTankLevel'] = pHTank
+  pHTank, offset = getSome("i", buff, offset)
+  data['chemistry']['pHTankLevel'] = dict(name="pH Tank Level", state=pHTank)
 
-  orpTank, offset = getSome("i", data, offset)
-  #print("orpTank: {}".format(orpTank))
-  state['chemistry']['orpTankLevel'] = orpTank
+  orpTank, offset = getSome("i", buff, offset)
+  data['chemistry']['orpTankLevel'] = dict(name="ORP Tank Level", state=orpTank)
 
-  alarms, offset = getSome("i", data, offset)
-  #print("alarms: {}".format(alarms))
-  state['chemistry']['alarms'] = alarms
+  alarms, offset = getSome("i", buff, offset)
+  data['chemistry']['alarms'] = dict(name="Chemistry Alarm", state=alarms)
 
-  return state

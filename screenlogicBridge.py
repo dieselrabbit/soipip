@@ -2,8 +2,11 @@ import sys
 import time
 from multiprocessing import Lock
 from discoverGateway import discoverGateway
-from slConnection import slConnection
+from slGateway import slGateway
 from doQuery import queryGateway, queryConfig, queryStatus, queryButtonPress
+from slSwitch import slSwitch
+from slSensor import slSensor
+#from constants import *
 
 class slBridge:
     def __init__(self, verbose=False, updateInterval=30, gatewayIP=None, gatewayPort=None):
@@ -11,19 +14,19 @@ class slBridge:
         self.__updateInterval = updateInterval
         self.__lock = Lock()
         self.__data = {}
-        self.__circuits = {}
+        self.__devices = {}
         
         if(not gatewayIP):
               gatewayIP, gatewayPort, gatewayType, gatewaySubtype, \
               gatewayName, okchk = discoverGateway(verbose)
 
         if(gatewayIP):
-            connection = slConnection()
-            if(connection.connect(gatewayIP, gatewayPort)):
-                self.connection = connection
+            self.__gateway = slGateway(gatewayIP, gatewayPort)
+            if(self.__gateway.connect()):
                 if(verbose):
                     print("connection success!")
                 self.update()
+                self.__gateway.disconnect()
             else:
                 if(verbose):
                     print("connection failed!")
@@ -33,45 +36,67 @@ class slBridge:
         with self.__lock:
             if ((curTime - self.__lastUpdate) > self.__updateInterval):
                 self.__lastUpdate = curTime
-                self.__data['config'] = queryConfig(self.connection)
-                self.__data['states'] = queryStatus(self.connection)
-                for i in self.__data['config']['circuits']['data']:
-                    cID = '%s' % i['id']
-                    self.__circuits[cID] = {}
-                    self.__circuits[cID]['id'] = cID
-                    self.__circuits[cID]['name'] = self.__data['config']['circuits']['names'][cID]
-                    self.__circuits[cID]['state'] = self.__data['states']['circuits']['states'][cID]
-                    #print(self.__circuits[cID])
+                self._updateData()
+                self._updateDevices()
+                
+    def _updateData(self):
+        self.__gateway.getData(self.__data)
+        #print(self.__data)
+
+    def _updateDevices(self):
+        self._updateSwitches()
+        self._updateSensors()
+        for k, d in self.__devices.items():
+            print(d.toString())
+
+    def _updateSwitches(self):
+        for k, v in self.__data['circuits'].items():
+            if(k in self.__devices):
+                self.__devices[k].update(v)
+            else:
+                self.__devices[k] = slSwitch(self, k, v)
+
+    def _updateSensors(self):
+        for k, v in self.__data['sensors'].items():
+            if(k in self.__devices):
+                self.__devices[k].update(v)
+            else:
+                self.__devices[k] = slSensor(self, k, v)
+        for k, v in self.__data['chemistry'].items():
+            if(k in self.__devices):
+                self.__devices[k].update(v)
+            else:
+                self.__devices[k] = slSensor(self, k, v)
+
+
+    #def _updateDevice(self, dataID, data):
+    #    for d in self.__devices
 
     def getConfig(self):
         return self._data['config']
-
-    def getStates(self):
-        return self.__data['states']
-
-    def getCircuits(self):
-        return self.__circuits
 
     def getChemistry(self):
         return self.__data['states']['chemistry']
 
     def setCircuit(self, circuitID, circuitState):
-        print(queryButtonPress(self.connection, circuitID, circuitState))
+        if(circuitID in self.__devices and self.__gateway.setCircuit(circuitID, circuitState)):
+            self._updateData()
+            return True
 
         
 if __name__ == "__main__":
-    bridge = slBridge(False)
-    if(len(sys.argv) > 1):
-        if(sys.argv[1] == 'circuits'):
-            print(bridge.getCircuits())
-        elif(sys.argv[1] == 'chemistry'):
-            print(bridge.getChemistry())
-        elif(sys.argv[1] == 'setCircuit'):
-            if(len(sys.argv) == 4):
-                print(bridge.setCircuit(sys.argv[2], sys.argv[3]))
-        else:
-            print("Unknown option!")
-    else:
-        print(bridge.getCircuits())
-        print(bridge.getStates())
+    bridge = slBridge(True)
+    #if(len(sys.argv) > 1):
+    #    if(sys.argv[1] == 'circuits'):
+    #        print(bridge.getCircuits())
+    #    elif(sys.argv[1] == 'chemistry'):
+    #        print(bridge.getChemistry())
+    #    elif(sys.argv[1] == 'setCircuit'):
+    #        if(len(sys.argv) == 4):
+    #            print(bridge.setCircuit(sys.argv[2], sys.argv[3]))
+    #    else:
+    #        print("Unknown option!")
+    #else:
+    #    print(bridge.getCircuits())
+    #    print(bridge.getStates())
     #bridge.connection.socket.close()
