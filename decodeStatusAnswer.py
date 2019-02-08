@@ -1,90 +1,148 @@
-# statusAnswer.py
-# copyright 2018, Keith P Jolley, keithpjolley@gmail.com, squalor heights, ca, usa
-# Thu May 31 16:47:03 PDT 2018
+from decodeData import getSome, getString
+from constants import *
 
-# Don't look at me, i'm hideous.
-# Decoding network structures is ugly and error prone.
-# 
+def decodeStatusAnswer(buff, data):
 
-import struct
-import numpy as np
+  #{ name="", state= }
+  if('sensors' not in data):
+    data['sensors'] = {}
+  
+  ok, offset = getSome("I", buff, 0)
 
-# expects:
-#   "want" is the type of data we are looking for
-#     see https://docs.python.org/3/library/struct.html#format-characters
-#     I make (un)educated guesses on if I think the data will be signed or unsigned.
-#   "buff" is the buffer to extract from
-#   "offset" is where in the buffer to read from
-# returns (data, newoffset) where:
-#  "data" is sizeof("want") byte(s) from "want" starting at "offset"
-#  "newoffset" is "offset + sizeof("want") to help keep track of where in "buff" to read next
-def getSome(want, buff, offset):
-  fmt = "<" + want
-  newoffset = offset + struct.calcsize(fmt)
-  return struct.unpack_from(fmt, buff, offset)[0], newoffset
+  freezeMode, offset = getSome("B", buff, offset)
 
-# decode the gateway's response to a "status" query
-# see: https://github.com/parnic/node-screenlogic/blob/master/messages/SLPoolStatusMessage.js
-def decodeStatusAnswer(data):
-  ok, offset = getSome("I", data, 0)
-  print("ok: {}".format(ok))
+  remotes, offset = getSome("B", buff, offset)
 
-  freezeMode, offset = getSome("B", data, offset)
-  print("freezeMode: {}".format(freezeMode))
+  poolDelay, offset = getSome("B", buff, offset)
 
-  remotes, offset = getSome("B", data, offset)
-  print("remotes: {}".format(remotes))
+  spaDelay, offset = getSome("B", buff, offset)
 
-  poolDelay, offset = getSome("B", data, offset)
-  print("poolDelay: {}".format(poolDelay))
-
-  spaDelay, offset = getSome("B", data, offset)
-  print("spaDelay: {}".format(spaDelay))
-
-  cleanerDelay, offset = getSome("B", data, offset)
-  print("cleanerDelay: {}".format(cleanerDelay))
+  cleanerDelay, offset = getSome("B", buff, offset)
 
   # fast forward 3 bytes. why? because.
-  offset = offset + struct.calcsize("3B")
+  ff1, offset = getSome("B", buff, offset)
+  ff2, offset = getSome("B", buff, offset)
+  ff3, offset = getSome("B", buff, offset)
 
-  airTemp, offset = getSome("i", data, offset)
-  print("airTemp: {}".format(airTemp))
+  if(data['config']['degC']['state']):
+    unittxt = "°C"
+  else:
+    unittxt = "°F"
 
-  bodiesCount, offset = getSome("I", data, offset)
+  airTemp, offset = getSome("i", buff, offset)
+  data['sensors']['airTemp'] = dict(name="Air Temperature", \
+                                    state=airTemp, \
+                                    hassType="sensor", \
+                                    unit=unittxt)
+
+  bodiesCount, offset = getSome("I", buff, offset)
   bodiesCount = min(bodiesCount, 2)
-  print("bodiesCount: {}".format(bodiesCount))
-  
-  currentTemp  = np.zeros(bodiesCount+1, dtype=int)
-  heatStatus   = np.zeros(bodiesCount+1, dtype=int)
-  setPoint     = np.zeros(bodiesCount+1, dtype=int)
-  coolSetPoint = np.zeros(bodiesCount+1, dtype=int)
-  heatMode     = np.zeros(bodiesCount+1, dtype=int)
+
+  if('bodies' not in data):
+    data['bodies'] = {} #[{} for x in range(bodiesCount)]
 
   for i in range(bodiesCount):
-    bodyType, offset = getSome("I", data, offset)
+    bodyType, offset = getSome("I", buff, offset)
     if(bodyType not in range(2)): bodyType = 0
 
-    currentTemp[bodyType], offset = getSome("i", data, offset)
-    print("  currentTemp[{}]: {}".format(bodyType, currentTemp[bodyType]))
+    if(i not in data['bodies']):
+      data['bodies'][i] = {}
+    
+    data['bodies'][i]['bodyType'] = dict(name="Type of body of water", \
+                                         state=bodyType)
 
-    heatStatus[bodyType], offset = getSome("i", data, offset)
-    print("  heatStatus[{}]: {}".format(bodyType, heatStatus[bodyType]))
+    currentTemp, offset = getSome("i", buff, offset)
+    data['bodies'][i]['currentTemp'] = dict(name="Current {} Temperature"\
+                                            .format(mapping.BODY_TYPE[bodyType]), \
+                                            state=currentTemp, \
+                                            hassType='sensor', \
+                                            unit=unittxt)
 
-    setPoint[bodyType], offset = getSome("i", data, offset)
-    print("  setPoint[{}]: {}".format(bodyType, setPoint[bodyType]))
+    heatStatus, offset = getSome("i", buff, offset)
+    data['bodies'][i]['heatStatus'] = dict(name="{} Heater"\
+                                           .format(mapping.BODY_TYPE[bodyType]), \
+                                           state=heatStatus, \
+                                           hassType='binary_sensor')
 
-    coolSetPoint[bodyType], offset = getSome("i", data, offset)
-    print("  coolSetPoint[{}]: {}".format(bodyType, coolSetPoint[bodyType]))
+    heatSetPoint, offset = getSome("i", buff, offset)
+    data['bodies'][i]['heatSetPoint'] = dict(name="{} Heat Set Point"\
+                                             .format(mapping.BODY_TYPE[bodyType]), \
+                                             state=heatSetPoint, \
+                                             hassType='sensor', \
+                                             unit=unittxt)
 
-    heatMode[bodyType], offset = getSome("i", data, offset)
-    print("  heatMode[{}]: {}".format(bodyType, heatMode[bodyType]))
-    print("")
+    coolSetPoint, offset = getSome("i", buff, offset)
+    data['bodies'][i]['coolSetPoint'] = dict(name="{} Cool Set Point"\
+                                             .format(mapping.BODY_TYPE[bodyType]), \
+                                             state=coolSetPoint, \
+                                             hassType='sensor', \
+                                             unit=unittxt)
+
+    heatMode, offset = getSome("i", buff, offset)
+    data['bodies'][i]['heatMode'] = dict(name="{} Heater Mode"\
+                                         .format(mapping.BODY_TYPE[bodyType]), \
+                                         state=heatMode,\
+                                         hassType='sensor')
   
-  circuitCount, offset = getSome("I", data, offset)
-  print("circuitCount: {}".format(circuitCount))
+  circuitCount, offset = getSome("I", buff, offset)
 
-  # ok, this is enough. my brain hurts. if i was in charge i'd make every single one of these their
-  # own pool message rather than have this monolithic datastructure. however, nobody asked me my 
-  # opinion when they were designing this...
+  if('circuits' not in data):
+    data['circuits'] = {}
 
-  # i'll add more decoding if i have a specific requirement for it. until then, cheers.
+  for i in range(circuitCount):
+    circuitID, offset = getSome("I", buff, offset)
+
+    if(circuitID not in data['circuits']):
+      data['circuits'][circuitID] = {}
+
+    if('id' not in data['circuits'][circuitID]):
+      data['circuits'][circuitID]['id'] = circuitID
+
+    circuitstate, offset = getSome("I", buff, offset)
+    data['circuits'][circuitID]['state'] = circuitstate
+
+    data['circuits'][circuitID]['hassType'] = 'switch'
+ 
+    circuitColorSet, offset = getSome("B", buff, offset)
+    circuitColorPos, offset = getSome("B", buff, offset)
+    circuitColorStagger, offset = getSome("B", buff, offset)
+    circuitDelay, offset = getSome("B", buff, offset)
+
+  if('chemistry' not in data):
+    data['chemistry'] = {}
+    
+  pH, offset = getSome("i", buff, offset)
+  data['chemistry']['pH'] = dict(name="pH", \
+                                 state=(pH / 100), \
+                                 hassType='sensor')
+  
+  orp, offset = getSome("i", buff, offset)
+  data['chemistry']['orp'] = dict(name="ORP", state=orp, \
+                                  hassType='sensor')
+
+  saturation, offset = getSome("i", buff, offset)
+  data['chemistry']['saturation'] = dict(name="Saturation Index", \
+                                         state=(saturation / 100), \
+                                         hassType='sensor')
+
+  saltPPM, offset = getSome("i", buff, offset)
+  data['chemistry']['saltPPM'] = dict(name="Salt", \
+                                      state=saltPPM, \
+                                      unit='ppm', \
+                                      hassType='sensor')
+
+  pHTank, offset = getSome("i", buff, offset)
+  data['chemistry']['pHTankLevel'] = dict(name="pH Tank Level", \
+                                          state=pHTank, \
+                                          hassType='sensor')
+
+  orpTank, offset = getSome("i", buff, offset)
+  data['chemistry']['orpTankLevel'] = dict(name="ORP Tank Level", \
+                                           state=orpTank, \
+                                           hassType='sensor')
+
+  alarms, offset = getSome("i", buff, offset)
+  data['chemistry']['alarms'] = dict(name="Chemistry Alarm", \
+                                     state=alarms, \
+                                     hassType='binary_sensor')
+

@@ -33,3 +33,13 @@ class code:
   VERSION_ANSWER    = VERSION_QUERY    + 1
   POOLSTATUS_QUERY  = 12526
   POOLSTATUS_ANSWER = POOLSTATUS_QUERY + 1
+  BUTTONPRESS_QUERY = 12530
+  BUTTONPRESS_ANSWER = BUTTONPRESS_QUERY + 1
+  CTRLCONFIG_QUERY  = 12532
+  CTRLCONFIG_ANSWER = CTRLCONFIG_QUERY + 1
+
+class mapping:
+  BODY_TYPE  = ['Pool', 'Spa']
+  HEAT_MODE  = ['Off', 'Solar', "Solar Prefered", 'Heat', "Don't Change"]
+  ON_OFF     = ['Off', 'On']
+  COLOR_MODE = ['Off', 'On', 'Set', 'Sync', 'Swim', 'Party', 'Romantic', 'Caribbean', 'American', 'Sunset', 'Royal', 'Save', 'Recall', 'Blue', 'Green', 'Red', 'White', 'Magenta', 'Thumper', 'Next', 'Reset', 'Hold']

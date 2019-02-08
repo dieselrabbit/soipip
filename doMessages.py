@@ -47,5 +47,5 @@ def decodeMessage(message):
   if(rcvLen != messageBytes):
     sys.stderr.write("WARNING: {}: rcvLen({}) != messageBytes({}).\n".format(me, rcvLen, messageBytes))
   if(rcvCode2 == code.UNKNOWN_ANSWER):
-    sys.stderr.write("WARNING: {}: rcvCode2({}) != expectCode2({}).\n".format(me, rcvCode2, expectCode2))
+    sys.stderr.write("WARNING: {}: rcvCode2({}) != expectCode2.\n".format(me, rcvCode2))
   return rcvCode2, data # return raw data

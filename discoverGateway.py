@@ -1,8 +1,3 @@
-#! /usr/bin/env python
-# -*- coding: UTF8 -*-
-# copyright 2018, Keith P Jolley, keithpjolley@gmail.com, squalor heights, ca, usa
-# Thu May 31 16:47:03 PDT 2018
-
 # find a local gateway.
 # see Section 2 of Protocol_Document.pdf for more info.
 #
@@ -21,15 +16,14 @@ import struct
 import ipaddress
 from constants import me
 
-def findGateway(verbose):
-  # these are only for the datagram so keep them here instead of "constants.py"
+def discoverGateway(verbose):
   bcast = "255.255.255.255"
   port  = 1444
   wantchk = 2
   addressfamily = socket.AF_INET
 
-  # no idea why this datastructure... it works.
   data  = struct.pack('<bbbbbbbb', 1,0,0,0, 0,0,0,0)
+
   # Create a UDP socket
   try:
     udpSock = socket.socket(addressfamily, socket.SOCK_DGRAM)
@@ -70,8 +64,8 @@ def findGateway(verbose):
   # "server" is ip_address:port that we got a response from. 
   # not sure what happens if we have to gateways on a subnet. havoc i suppose.
   if(verbose):
-    system, port = server
-    print("INFO: {}: Received a response from {}:{}".format(me(), system, port))
+    addr, port = server
+    print("INFO: {}: Received a response from {}:{}".format(me(), addr, port))
 
   # the format here is a little different than the documentation. 
   # the response I get back includes the gateway's name in the form of "Pentair: AB-CD-EF"
@@ -109,10 +103,11 @@ def findGateway(verbose):
     print("gatewayPort: '{}'".format(gatewayPort))
     print("gatewayType: '{}'".format(gatewayType))
     print("gatewaySubtype: '{}'".format(gatewaySubtype))
-    print("gatewayName: '{}'".format(gatewayName.decode("utf-8")))
+    print("gatewayName: '{}'".format(gatewayName.decode("utf-8").strip('\0')))
 
-  return gatewayIP, gatewayPort, gatewayType, gatewaySubtype, gatewayName, okchk
+  return gatewayIP, gatewayPort, gatewayType, gatewaySubtype, gatewayName.decode("utf-8").strip('\0'), okchk
 
 if __name__ == "__main__":
   verbose = True
-  gatewayIP, gatewayPort, gatewayType, gatewaySubtype, gatewayName, okchk = findGateway(verbose)
+  gatewayIP, gatewayPort, gatewayType, gatewaySubtype, gatewayName, okchk = discoverGateway(verbose)
+
