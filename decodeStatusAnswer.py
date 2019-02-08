@@ -1,4 +1,5 @@
 from decodeData import getSome, getString
+from constants import *
 
 def decodeStatusAnswer(buff, data):
 
@@ -23,34 +24,65 @@ def decodeStatusAnswer(buff, data):
   ff2, offset = getSome("B", buff, offset)
   ff3, offset = getSome("B", buff, offset)
 
+  if(data['config']['degC']['state']):
+    unittxt = "°C"
+  else:
+    unittxt = "°F"
+
   airTemp, offset = getSome("i", buff, offset)
-  data['sensors']['airTemp'] = dict(name="Air Temperature", state=airTemp)
+  data['sensors']['airTemp'] = dict(name="Air Temperature", \
+                                    state=airTemp, \
+                                    hassType="sensor", \
+                                    unit=unittxt)
 
   bodiesCount, offset = getSome("I", buff, offset)
   bodiesCount = min(bodiesCount, 2)
 
   if('bodies' not in data):
-    data['bodies'] = [{} for x in range(bodiesCount)]
+    data['bodies'] = {} #[{} for x in range(bodiesCount)]
 
   for i in range(bodiesCount):
     bodyType, offset = getSome("I", buff, offset)
     if(bodyType not in range(2)): bodyType = 0
-    data['bodies'][i]['bodyType'] = dict(name="Type of body of water", state=bodyType)
+
+    if(i not in data['bodies']):
+      data['bodies'][i] = {}
+    
+    data['bodies'][i]['bodyType'] = dict(name="Type of body of water", \
+                                         state=bodyType)
 
     currentTemp, offset = getSome("i", buff, offset)
-    data['bodies'][i]['currentTemp'] = dict(name="Current Temperature", state=currentTemp)
+    data['bodies'][i]['currentTemp'] = dict(name="Current {} Temperature"\
+                                            .format(mapping.BODY_TYPE[bodyType]), \
+                                            state=currentTemp, \
+                                            hassType='sensor', \
+                                            unit=unittxt)
 
     heatStatus, offset = getSome("i", buff, offset)
-    data['bodies'][i]['heatStatus'] = dict(name="Heater", state=heatStatus)
+    data['bodies'][i]['heatStatus'] = dict(name="{} Heater"\
+                                           .format(mapping.BODY_TYPE[bodyType]), \
+                                           state=heatStatus, \
+                                           hassType='binary_sensor')
 
     heatSetPoint, offset = getSome("i", buff, offset)
-    data['bodies'][i]['heatSetPoint'] = dict(name="Heat Set Point", state=heatSetPoint)
+    data['bodies'][i]['heatSetPoint'] = dict(name="{} Heat Set Point"\
+                                             .format(mapping.BODY_TYPE[bodyType]), \
+                                             state=heatSetPoint, \
+                                             hassType='sensor', \
+                                             unit=unittxt)
 
     coolSetPoint, offset = getSome("i", buff, offset)
-    data['bodies'][i]['coolSetPoint'] = dict(name="Cool Set Point", state=coolSetPoint)
+    data['bodies'][i]['coolSetPoint'] = dict(name="{} Cool Set Point"\
+                                             .format(mapping.BODY_TYPE[bodyType]), \
+                                             state=coolSetPoint, \
+                                             hassType='sensor', \
+                                             unit=unittxt)
 
     heatMode, offset = getSome("i", buff, offset)
-    data['bodies'][i]['heatMode'] = dict(name="Heater Mode", state=heatMode)
+    data['bodies'][i]['heatMode'] = dict(name="{} Heater Mode"\
+                                         .format(mapping.BODY_TYPE[bodyType]), \
+                                         state=heatMode,\
+                                         hassType='sensor')
   
   circuitCount, offset = getSome("I", buff, offset)
 
@@ -68,6 +100,8 @@ def decodeStatusAnswer(buff, data):
 
     circuitstate, offset = getSome("I", buff, offset)
     data['circuits'][circuitID]['state'] = circuitstate
+
+    data['circuits'][circuitID]['hassType'] = 'switch'
  
     circuitColorSet, offset = getSome("B", buff, offset)
     circuitColorPos, offset = getSome("B", buff, offset)
@@ -78,23 +112,37 @@ def decodeStatusAnswer(buff, data):
     data['chemistry'] = {}
     
   pH, offset = getSome("i", buff, offset)
-  data['chemistry']['pH'] = dict(name="pH", state=(pH / 100))
+  data['chemistry']['pH'] = dict(name="pH", \
+                                 state=(pH / 100), \
+                                 hassType='sensor')
   
   orp, offset = getSome("i", buff, offset)
-  data['chemistry']['orp'] = dict(name="ORP", state=orp)
+  data['chemistry']['orp'] = dict(name="ORP", state=orp, \
+                                  hassType='sensor')
 
   saturation, offset = getSome("i", buff, offset)
-  data['chemistry']['saturation'] = dict(name="Saturation Index", state=(saturation / 100))
+  data['chemistry']['saturation'] = dict(name="Saturation Index", \
+                                         state=(saturation / 100), \
+                                         hassType='sensor')
 
   saltPPM, offset = getSome("i", buff, offset)
-  data['chemistry']['saltPPM'] = dict(name="Salt", state=saltPPM)
+  data['chemistry']['saltPPM'] = dict(name="Salt", \
+                                      state=saltPPM, \
+                                      unit='ppm', \
+                                      hassType='sensor')
 
   pHTank, offset = getSome("i", buff, offset)
-  data['chemistry']['pHTankLevel'] = dict(name="pH Tank Level", state=pHTank)
+  data['chemistry']['pHTankLevel'] = dict(name="pH Tank Level", \
+                                          state=pHTank, \
+                                          hassType='sensor')
 
   orpTank, offset = getSome("i", buff, offset)
-  data['chemistry']['orpTankLevel'] = dict(name="ORP Tank Level", state=orpTank)
+  data['chemistry']['orpTankLevel'] = dict(name="ORP Tank Level", \
+                                           state=orpTank, \
+                                           hassType='sensor')
 
   alarms, offset = getSome("i", buff, offset)
-  data['chemistry']['alarms'] = dict(name="Chemistry Alarm", state=alarms)
+  data['chemistry']['alarms'] = dict(name="Chemistry Alarm", \
+                                     state=alarms, \
+                                     hassType='binary_sensor')
 

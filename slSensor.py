@@ -1,4 +1,5 @@
 from slDevice import slDevice
+from constants import mapping
 
 class slSensor(slDevice):
     def __init__(self, slBridge, dataID, data):
@@ -6,12 +7,20 @@ class slSensor(slDevice):
             data['hassType'] = "sensor"
         super().__init__(slBridge, dataID, data)
         if('unit' in data):
-            self.__unit = data["unit"]
+            self._unit = data["unit"]
         else:
-            self.__unit = ""
+            self._unit = ""
 
-    def getUnit(self):
-        return self.__unit
+    @property
+    def friendlyState(self):
+        if(self._unit):
+            return "{} {}".format(self._state, self._unit)
+        elif(self._hassType == 'binary_sensor'):
+            return mapping.ON_OFF[self._state]
+        else:
+            return self._state
 
-    def getValue(self):
-        return self.__state
+    @property
+    def unit(self):
+        return self._unit
+

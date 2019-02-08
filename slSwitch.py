@@ -1,5 +1,5 @@
-from constants import *
 from slDevice import slDevice
+from constants import mapping
 
 class slSwitch(slDevice):
     def __init__(self, slBridge, dataID, data):
@@ -8,21 +8,23 @@ class slSwitch(slDevice):
         super().__init__(slBridge, dataID, data)
 
     def toggle(self):
-        if(state == 0):
+        if(self._state == 0):
             newState = 1
         else:
             newState = 0
         
-        if(self.__bridge.setCircuit(self.__id, newState)):
-            print("{} set to {}".format(self.__name, self.stateText()))
+        if(self.__bridge.setCircuit(self._id, newState)):
+            print("{} set to {}".format(self._name, self.friendlyState))
         else:
             print("Setting of circuit failed!")
 
+    @property
     def isOn(self):
-        if(state == 1):
+        if(self._state == 1):
             return True
         else:
             return False
 
-    def stateText(self):
-        return mapping.ON_OFF[self.__state]
+    @property
+    def friendlyState(self):
+        return mapping.ON_OFF[self._state]

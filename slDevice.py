@@ -1,26 +1,28 @@
+from constants import mapping
 
 class slDevice:
     def __init__(self, slBridge, dataID, data):
-        self.__bridge = slBridge
-        self.__id = dataID
-        self.__name = data["name"]
-        self.__state = data["state"]
-        self.__hassType = data["hassType"]
+        self._bridge = slBridge
+        self._id = dataID
+        self._name = data["name"]
+        self._state = data["state"]
+        self._hassType = data["hassType"]
 
     def update(self, data):
-        self.__state = data["state"]
+        self._state = data["state"]
 
+    @property
     def id(self):
-        return self.__id
+        return self._id
 
+    @property
     def name(self):
-        return self.__name
+        return self._name
 
+    @property
     def state(self):
-        return self.__state
+        return self._state
 
+    @property
     def hassType(self):
-        return self.__hassType
-
-    def toString(self):
-        return "{}: {}".format(self.__name, self.__state)
+        return self._hassType

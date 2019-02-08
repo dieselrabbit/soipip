@@ -18,8 +18,8 @@ def decodeConfigAnswer(buff, data):
   #if('bodies' not in data):
   #  data['bodies'] = {}
     
-  data['config']['minSetPoint'] = dict(name="Maximum Temperature", state=[minSetPoint0, minSetPoint1])
-  data['config']['maxSetPoint'] = dict(name="Minimum Temperature", state=[maxSetPoint0, maxSetPoint1])
+  data['config']['minSetPoint'] = dict(name="Minimum Temperature", state=[minSetPoint0, minSetPoint1])
+  data['config']['maxSetPoint'] = dict(name="Maximum Temperature", state=[maxSetPoint0, maxSetPoint1])
 
   degC, offset = getSome("B", buff, offset)
   data['config']['degC'] = dict(name="Is Celcius", state=degC)
@@ -51,7 +51,7 @@ def decodeConfigAnswer(buff, data):
     paddedName, offset = getString(buff, offset)
     circuitName = paddedName.decode("utf-8").strip('\0')
     data['circuits'][circuitID]['name'] = circuitName
-
+    
     cNameIndex, offset = getSome("B", buff, offset)
     cFunction, offset = getSome("B", buff, offset)
     cInterface, offset = getSome("B", buff, offset)

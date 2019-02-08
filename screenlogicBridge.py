@@ -6,7 +6,6 @@ from slGateway import slGateway
 from doQuery import queryGateway, queryConfig, queryStatus, queryButtonPress
 from slSwitch import slSwitch
 from slSensor import slSensor
-#from constants import *
 
 class slBridge:
     def __init__(self, verbose=False, updateInterval=30, gatewayIP=None, gatewayPort=None):
@@ -41,32 +40,42 @@ class slBridge:
                 
     def _updateData(self):
         self.__gateway.getData(self.__data)
-        #print(self.__data)
 
     def _updateDevices(self):
         self._updateSwitches()
         self._updateSensors()
         for k, d in self.__devices.items():
-            print(d.toString())
+            print("{} - {}: {}".format(d.hassType, d.name, d.friendlyState))
 
     def _updateSwitches(self):
         for k, v in self.__data['circuits'].items():
-            if(k in self.__devices):
-                self.__devices[k].update(v)
-            else:
-                self.__devices[k] = slSwitch(self, k, v)
+            if('hassType' in v):
+                if(k in self.__devices):
+                    self.__devices[k].update(v)
+                else:
+                    self.__devices[k] = slSwitch(self, k, v)
 
     def _updateSensors(self):
         for k, v in self.__data['sensors'].items():
-            if(k in self.__devices):
-                self.__devices[k].update(v)
-            else:
-                self.__devices[k] = slSensor(self, k, v)
+            if('hassType' in v):
+                if(k in self.__devices):
+                    self.__devices[k].update(v)
+                else:
+                    self.__devices[k] = slSensor(self, k, v)
+        for i in self.__data['bodies']:
+            for k, v in self.__data['bodies'][i].items():
+                if('hassType' in v):
+                    kI = "{}_{}".format(k, i)
+                    if(kI in self.__devices):
+                        self.__devices[kI].update(v)
+                    else:
+                        self.__devices[kI] = slSensor(self, kI, v)
         for k, v in self.__data['chemistry'].items():
-            if(k in self.__devices):
-                self.__devices[k].update(v)
-            else:
-                self.__devices[k] = slSensor(self, k, v)
+            if('hassType' in v):
+                if(k in self.__devices):
+                    self.__devices[k].update(v)
+                else:
+                    self.__devices[k] = slSensor(self, k, v)
 
 
     #def _updateDevice(self, dataID, data):
