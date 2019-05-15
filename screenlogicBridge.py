@@ -6,6 +6,7 @@ from slGateway import slGateway
 from doQuery import queryGateway, queryConfig, queryStatus, queryButtonPress
 from slSwitch import slSwitch
 from slSensor import slSensor
+import json
 
 class slBridge:
     def __init__(self, verbose=False, updateInterval=30, gatewayIP=None, gatewayPort=None):
@@ -23,12 +24,15 @@ class slBridge:
             self.__gateway = slGateway(gatewayIP, gatewayPort)
             if(self.__gateway.connect()):
                 if(verbose):
-                    print("connection success!")
-                self.update()
+                    print("Connection success!")
+                self.__gateway.getConfig(self.__data)
+                self.__gateway.getStatus(self.__data)
                 self.__gateway.disconnect()
             else:
                 if(verbose):
-                    print("connection failed!")
+                    print("Connection failed!")
+        else:
+            print("Discovery Failed!")
 
     def update(self):
         curTime = time.time()
@@ -37,13 +41,35 @@ class slBridge:
                 self.__lastUpdate = curTime
                 self._updateData()
                 self._updateDevices()
+
+    def getDevices(self):
+        return self.__devices
+
+    def getJson(self):
+        self._updateDevices()
+        dictOut = {}
+        for k, d in self.__devices.items():
+            if(d.hassType == 'sensor'):
+                dictData = dict(name=d.name,state=d.friendlyState)#state,unit=d.unit,friendly_state=d.friendlyState)
+            else:
+                dictData = {}
+                dictData['id'] = k
+                dictData['name'] = d.name
+                dictData['state'] = self._jsonName(d.friendlyState)
+            dictOut[self._jsonName(d.name)] = dictData 
+        return json.dumps(dictOut)
+
+        return self.__data
                 
     def _updateData(self):
-        self.__gateway.getData(self.__data)
+        self.__gateway.getStatus(self.__data)
 
     def _updateDevices(self):
         self._updateSwitches()
         self._updateSensors()
+
+    def getFriendly(self):
+        self._updateDevices()
         for k, d in self.__devices.items():
             print("{} - {}: {}".format(d.hassType, d.name, d.friendlyState))
 
@@ -77,35 +103,53 @@ class slBridge:
                 else:
                     self.__devices[k] = slSensor(self, k, v)
 
-
+    def _jsonName(self, name):
+        #s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+        #return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+        return name.replace(" ","_").lower()
+    
+    
     #def _updateDevice(self, dataID, data):
     #    for d in self.__devices
 
     def getConfig(self):
-        return self._data['config']
+        return self.__data['config']
 
     def getChemistry(self):
         return self.__data['states']['chemistry']
 
+    def getCircuit(self, circuitID):
+        if circuitID in self.__devices:
+            return self.__devices[circuitID].friendlyState
+        else:
+            return "error"
+    
     def setCircuit(self, circuitID, circuitState):
         if(circuitID in self.__devices and self.__gateway.setCircuit(circuitID, circuitState)):
             self._updateData()
             return True
+        
+    def dumpDict(self):
+        return json.dumps(self.__data)
+
+    def getKeys(self):
+        for k, d in self.__devices.items():
+            print("      - {}".format(self._jsonName(d.name)))
+        
 
         
 if __name__ == "__main__":
-    bridge = slBridge(True)
-    #if(len(sys.argv) > 1):
-    #    if(sys.argv[1] == 'circuits'):
-    #        print(bridge.getCircuits())
-    #    elif(sys.argv[1] == 'chemistry'):
-    #        print(bridge.getChemistry())
-    #    elif(sys.argv[1] == 'setCircuit'):
-    #        if(len(sys.argv) == 4):
-    #            print(bridge.setCircuit(sys.argv[2], sys.argv[3]))
-    #    else:
-    #        print("Unknown option!")
-    #else:
-    #    print(bridge.getCircuits())
-    #    print(bridge.getStates())
-    #bridge.connection.socket.close()
+    bridge = slBridge(False)
+    if(len(sys.argv) > 1):
+        if(sys.argv[1] == 'get'):
+            if(len(sys.argv) == 3):
+                print(bridge.getCircuit(sys.argv[2]))
+        elif(sys.argv[1] == 'set'):
+            if(len(sys.argv) == 4):
+                print(bridge.setCircuit(sys.argv[2], sys.argv[3]))
+        elif(sys.argv[1] == 'json'):
+            print(bridge.getJson())
+        else:
+            print("Unknown option!")
+    else:
+        print(bridge.getFriendly())#getJson())

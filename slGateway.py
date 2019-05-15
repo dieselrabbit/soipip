@@ -25,9 +25,12 @@ class slGateway:
     def connected(self):
         return self.__connected
 
-    def getData(self, data):
+    def getConfig(self, data):
         if(self.__connected or self.connect()):
             queryConfig(self.__socket, data)
+
+    def getStatus(self, data):
+        if(self.__connected or self.connect()):
             queryStatus(self.__socket, data)
 
     def setCircuit(self, circuitID, circuitState):

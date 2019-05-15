@@ -24,13 +24,13 @@ def decodeStatusAnswer(buff, data):
   ff2, offset = getSome("B", buff, offset)
   ff3, offset = getSome("B", buff, offset)
 
-  if(data['config']['degC']['state']):
+  if(data['config']['is_celcius']['state']):
     unittxt = "°C"
   else:
     unittxt = "°F"
 
   airTemp, offset = getSome("i", buff, offset)
-  data['sensors']['airTemp'] = dict(name="Air Temperature", \
+  data['sensors']['air_temperature'] = dict(name="Air Temperature", \
                                     state=airTemp, \
                                     hassType="sensor", \
                                     unit=unittxt)
@@ -48,38 +48,38 @@ def decodeStatusAnswer(buff, data):
     if(i not in data['bodies']):
       data['bodies'][i] = {}
     
-    data['bodies'][i]['bodyType'] = dict(name="Type of body of water", \
+    data['bodies'][i]['body_type'] = dict(name="Type of body of water", \
                                          state=bodyType)
 
     currentTemp, offset = getSome("i", buff, offset)
-    data['bodies'][i]['currentTemp'] = dict(name="Current {} Temperature"\
+    data['bodies'][i]['current_temperature'] = dict(name="Current {} Temperature"\
                                             .format(mapping.BODY_TYPE[bodyType]), \
                                             state=currentTemp, \
                                             hassType='sensor', \
                                             unit=unittxt)
 
     heatStatus, offset = getSome("i", buff, offset)
-    data['bodies'][i]['heatStatus'] = dict(name="{} Heater"\
+    data['bodies'][i]['heat_status'] = dict(name="{} Heater"\
                                            .format(mapping.BODY_TYPE[bodyType]), \
                                            state=heatStatus, \
                                            hassType='binary_sensor')
 
     heatSetPoint, offset = getSome("i", buff, offset)
-    data['bodies'][i]['heatSetPoint'] = dict(name="{} Heat Set Point"\
+    data['bodies'][i]['heat_set_point'] = dict(name="{} Heat Set Point"\
                                              .format(mapping.BODY_TYPE[bodyType]), \
                                              state=heatSetPoint, \
                                              hassType='sensor', \
                                              unit=unittxt)
 
     coolSetPoint, offset = getSome("i", buff, offset)
-    data['bodies'][i]['coolSetPoint'] = dict(name="{} Cool Set Point"\
+    data['bodies'][i]['cool_set_point'] = dict(name="{} Cool Set Point"\
                                              .format(mapping.BODY_TYPE[bodyType]), \
                                              state=coolSetPoint, \
                                              hassType='sensor', \
                                              unit=unittxt)
 
     heatMode, offset = getSome("i", buff, offset)
-    data['bodies'][i]['heatMode'] = dict(name="{} Heater Mode"\
+    data['bodies'][i]['heat_mode'] = dict(name="{} Heater Mode"\
                                          .format(mapping.BODY_TYPE[bodyType]), \
                                          state=heatMode,\
                                          hassType='sensor')
@@ -112,7 +112,7 @@ def decodeStatusAnswer(buff, data):
     data['chemistry'] = {}
     
   pH, offset = getSome("i", buff, offset)
-  data['chemistry']['pH'] = dict(name="pH", \
+  data['chemistry']['ph'] = dict(name="pH", \
                                  state=(pH / 100), \
                                  hassType='sensor')
   
@@ -126,18 +126,18 @@ def decodeStatusAnswer(buff, data):
                                          hassType='sensor')
 
   saltPPM, offset = getSome("i", buff, offset)
-  data['chemistry']['saltPPM'] = dict(name="Salt", \
+  data['chemistry']['salt_ppm'] = dict(name="Salt", \
                                       state=saltPPM, \
                                       unit='ppm', \
                                       hassType='sensor')
 
   pHTank, offset = getSome("i", buff, offset)
-  data['chemistry']['pHTankLevel'] = dict(name="pH Tank Level", \
+  data['chemistry']['ph_tank_level'] = dict(name="pH Tank Level", \
                                           state=pHTank, \
                                           hassType='sensor')
 
   orpTank, offset = getSome("i", buff, offset)
-  data['chemistry']['orpTankLevel'] = dict(name="ORP Tank Level", \
+  data['chemistry']['orp_tank_level'] = dict(name="ORP Tank Level", \
                                            state=orpTank, \
                                            hassType='sensor')
 

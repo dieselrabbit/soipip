@@ -1,14 +1,4 @@
-#! /usr/bin/env python
-# -*- coding: UTF8 -*-
-
-# doQuery.py
-# copyright 2018, Keith P Jolley, keithpjolley@gmail.com, squalor heights, ca, usa
-# Thu May 31 16:47:03 PDT 2018
-
-# sends the gateway a few commands and decodes/prints the responses.
-
 import socket
-import gatewayLogin
 import doMessages
 import decodeConfigAnswer
 import decodeStatusAnswer
@@ -53,15 +43,3 @@ def queryButtonPress(gatewaySocket, circuitID, circuitState):
       sys.exit(11)
     print(rcvcode)
     return True
-
-# same as "screen-logic.py" but you supply the host and port
-if __name__ == "__main__":
-  import sys
-  if(len(sys.argv) != 3):
-    print("ERROR: {}: usage: '{} gatewayIP port'".format(me(), me()))
-    sys.exit(20)
-  # don't bother checking for saneness, our user is really smart
-  gatewayIP = sys.argv[1]
-  gatewayPort = sys.argv[2]
-  tcpSock = gatewayLogin(gatewayIP, gatewayPort)
-  queryGateway(tcpSock)
