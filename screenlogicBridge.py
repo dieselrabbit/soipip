@@ -28,6 +28,7 @@ class slBridge:
                 self.__gateway.getConfig(self.__data)
                 self.__gateway.getStatus(self.__data)
                 self.__gateway.disconnect()
+                self._updateDevices()
             else:
                 if(verbose):
                     print("Connection failed!")
@@ -46,7 +47,6 @@ class slBridge:
         return self.__devices
 
     def getJson(self):
-        self._updateDevices()
         dictOut = {}
         for k, d in self.__devices.items():
             if(d.hassType == 'sensor'):
@@ -119,14 +119,13 @@ class slBridge:
         return self.__data['states']['chemistry']
 
     def getCircuit(self, circuitID):
-        intID = int(circuitID)
-        if intID in self.__devices:
-            return self.__devices[intID].friendlyState
+        if circuitID in self.__devices:
+            return self.__devices[circuitID].friendlyState
         else:
             return "error"
     
     def setCircuit(self, circuitID, circuitState):
-        if(circuitID in self.__devices and self.__gateway.setCircuit(circuitID, int(circuitState))):
+        if(circuitID in self.__devices and self.__gateway.setCircuit(circuitID, circuitState)):
             self._updateData()
             return True
         
@@ -144,10 +143,10 @@ if __name__ == "__main__":
     if(len(sys.argv) > 1):
         if(sys.argv[1] == 'get'):
             if(len(sys.argv) == 3):
-                print(bridge.getCircuit(sys.argv[2]))
+                print(bridge.getCircuit(int(sys.argv[2])))
         elif(sys.argv[1] == 'set'):
             if(len(sys.argv) == 4):
-                print(bridge.setCircuit(sys.argv[2], sys.argv[3]))
+                print(bridge.setCircuit(int(sys.argv[2]), int(sys.argv[3])))
         elif(sys.argv[1] == 'json'):
             print(bridge.getJson())
         else:
