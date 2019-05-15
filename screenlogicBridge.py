@@ -119,13 +119,14 @@ class slBridge:
         return self.__data['states']['chemistry']
 
     def getCircuit(self, circuitID):
-        if circuitID in self.__devices:
-            return self.__devices[circuitID].friendlyState
+        intID = int(circuitID)
+        if intID in self.__devices:
+            return self.__devices[intID].friendlyState
         else:
             return "error"
     
     def setCircuit(self, circuitID, circuitState):
-        if(circuitID in self.__devices and self.__gateway.setCircuit(circuitID, circuitState)):
+        if(circuitID in self.__devices and self.__gateway.setCircuit(circuitID, int(circuitState))):
             self._updateData()
             return True
         
