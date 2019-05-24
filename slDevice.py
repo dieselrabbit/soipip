@@ -1,4 +1,4 @@
-from constants import mapping
+from gateway.constants import mapping
 
 class slDevice:
     def __init__(self, slBridge, dataID, data):

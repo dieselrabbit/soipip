@@ -1,9 +1,8 @@
 import sys
 import time
 from multiprocessing import Lock
-from discoverGateway import discoverGateway
+from gateway.gatewayDiscovery import discoverGateway
 from slGateway import slGateway
-from doQuery import queryGateway, queryConfig, queryStatus, queryButtonPress
 from slSwitch import slSwitch
 from slSensor import slSensor
 import json
@@ -43,35 +42,12 @@ class slBridge:
                 self._updateData()
                 self._updateDevices()
 
-    def getDevices(self):
-        return self.__devices
-
-    def getJson(self):
-        dictOut = {}
-        for k, d in self.__devices.items():
-            if(d.hassType == 'sensor'):
-                dictData = dict(name=d.name,state=d.friendlyState)#state,unit=d.unit,friendly_state=d.friendlyState)
-            else:
-                dictData = {}
-                dictData['id'] = k
-                dictData['name'] = d.name
-                dictData['state'] = self._jsonName(d.friendlyState)
-            dictOut[self._jsonName(d.name)] = dictData 
-        return json.dumps(dictOut)
-
-        return self.__data
-                
     def _updateData(self):
         self.__gateway.getStatus(self.__data)
 
     def _updateDevices(self):
         self._updateSwitches()
         self._updateSensors()
-
-    def getFriendly(self):
-        self._updateDevices()
-        for k, d in self.__devices.items():
-            print("{} - {}: {}".format(d.hassType, d.name, d.friendlyState))
 
     def _updateSwitches(self):
         for k, v in self.__data['circuits'].items():
@@ -103,14 +79,34 @@ class slBridge:
                 else:
                     self.__devices[k] = slSensor(self, k, v)
 
+
+    def getDevices(self):
+        return self.__devices
+
+
+    def getJson(self):
+        dictOut = {}
+        for k, d in self.__devices.items():
+            if(d.hassType == 'sensor'):
+                dictData = dict(name=d.name,state=d.friendlyState)#state,unit=d.unit,friendly_state=d.friendlyState)
+            else:
+                dictData = {}
+                dictData['id'] = k
+                dictData['name'] = d.name
+                dictData['state'] = self._jsonName(d.friendlyState)
+            dictOut[self._jsonName(d.name)] = dictData 
+        return json.dumps(dictOut)
+
     def _jsonName(self, name):
         #s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
         #return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
         return name.replace(" ","_").lower()
-    
-    
-    #def _updateDevice(self, dataID, data):
-    #    for d in self.__devices
+
+
+    def getFriendly(self):
+        self._updateDevices()
+        for k, d in self.__devices.items():
+            print("{} - {}: {}".format(k, d.name, d.friendlyState))
 
     def getConfig(self):
         return self.__data['config']
@@ -135,11 +131,12 @@ class slBridge:
     def getKeys(self):
         for k, d in self.__devices.items():
             print("      - {}".format(self._jsonName(d.name)))
-        
+
+
 
         
 if __name__ == "__main__":
-    bridge = slBridge(False)
+    bridge = slBridge(True)
     if(len(sys.argv) > 1):
         if(sys.argv[1] == 'get'):
             if(len(sys.argv) == 3):

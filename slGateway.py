@@ -1,6 +1,6 @@
 import socket
-from gatewayLogin import gatewayLogin
-from doQuery import queryGateway, queryConfig, queryStatus, queryButtonPress
+from gateway.gatewayLogin import gatewayLogin
+from gateway.gatewayQuery import queryGateway, queryConfig, queryStatus, queryButtonPress
 
 class slGateway:
     def __init__(self, ip, port):

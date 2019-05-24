@@ -1,5 +1,5 @@
 from slDevice import slDevice
-from constants import mapping
+from gateway.constants import mapping
 
 class slSwitch(slDevice):
     def __init__(self, slBridge, dataID, data):

@@ -1,5 +1,5 @@
 import struct
-from decodeData import getSome, getString
+from gateway.decodeData import getSome, getString
 
 def decodeConfigAnswer(buff, data):
 

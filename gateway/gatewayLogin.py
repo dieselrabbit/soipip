@@ -1,17 +1,17 @@
 import socket
 import struct
-import doMessages
-from constants import *
+from gateway.messageHelper import makeMessageString, getMessageString, makeMessage, decodeMessage
+from gateway.constants import *
 
 # returns a formatted login message
 def createLoginMessage():
   # these constants are only for this message. keep them here.
   schema = 348
   connectionType = 0
-  clientVersion = doMessages.makeMessageString('Android')
+  clientVersion = makeMessageString('Android')
   pid  = 2
   password = "mypassword" # passwd must be <= 16 chars. empty is not OK.
-  passwd = doMessages.makeMessageString(password)
+  passwd = makeMessageString(password)
   fmt = "<II" + str(len(clientVersion)) + "s" + str(len(passwd)) + "sxI"
   return struct.pack(fmt, schema, connectionType, clientVersion, passwd, pid)
 
@@ -45,11 +45,11 @@ def gatewayLogin(gatewayIP, gatewayPort):
 
   # tx/rx challenge  (?)  (gateway returns its mac address in the form 01-23-45-AB-CD-EF)
   # why? dunno.
-  tcpSock.sendall(doMessages.makeMessage(code.CHALLENGE_QUERY))
+  tcpSock.sendall(makeMessage(code.CHALLENGE_QUERY))
   data = tcpSock.recv(48)
   if not data:
     sys.stderr.write("WARNING: {}: no {} data received.\n".format(me, "CHALLENGE_ANSWER"))
-  rcvcode, data = doMessages.decodeMessage(data)
+  rcvcode, data = decodeMessage(data)
   if(rcvcode != code.CHALLENGE_ANSWER):
     sys.stderr.write("WARNING: {}: rcvCode2({}) != {}.\n".format(me, CHALLENGE_ANSWER))
     sys.exit(10)
@@ -58,11 +58,11 @@ def gatewayLogin(gatewayIP, gatewayPort):
   # now that we've "connected" and "challenged," we can "login." None of these things
   # actually do anything, but they are required.
   msg = createLoginMessage()
-  tcpSock.sendall(doMessages.makeMessage(code.LOCALLOGIN_QUERY, msg))
+  tcpSock.sendall(makeMessage(code.LOCALLOGIN_QUERY, msg))
   data = tcpSock.recv(48)
   if not data:
     sys.stderr.write("WARNING: {}: no {} data received.\n".format(me, "LOCALLOGIN_ANSWER"))
-  rcvCode, data = doMessages.decodeMessage(data)
+  rcvCode, data = decodeMessage(data)
   if(rcvCode != code.LOCALLOGIN_ANSWER):
     sys.stderr.write("WARNING: {}: rcvCode({}) != {}.\n".format(me, rcvCode, code.LOCALLOGIN_ANSWER))
     sys.exit(10)

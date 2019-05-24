@@ -1,5 +1,5 @@
-from decodeData import getSome, getString
-from constants import *
+from gateway.decodeData import getSome, getString
+from gateway.constants import *
 
 def decodeStatusAnswer(buff, data):
 
