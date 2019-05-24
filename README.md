@@ -1,6 +1,6 @@
 # Screenlogic Over IP in Python
 
-Forked from forked from keithpjolley/soipip with the goal of turning into a Home Assistant integration
+Forked from keithpjolley/soipip with the goal of turning into a Home Assistant integration
 
 From keithpjolley/soipip:
 The protocol and codes are documented fairly well here:
