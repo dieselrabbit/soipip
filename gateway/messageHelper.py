@@ -4,8 +4,8 @@
 
 # implements creating and reading pool messages
 
-from constants import *
 import struct
+from gateway.constants import *
 
 # Strings within messages are described at the start of Section 4 in Protocol_Document.pdf
 # Send this function a string and it returns a properly encoded struct.

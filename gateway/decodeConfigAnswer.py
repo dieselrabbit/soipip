@@ -1,5 +1,5 @@
 import struct
-from decodeData import getSome, getString
+from gateway.decodeData import getSome, getString
 
 def decodeConfigAnswer(buff, data):
 
@@ -8,7 +8,7 @@ def decodeConfigAnswer(buff, data):
     data['config'] = {}
     
   controlerID, offset = getSome("I", buff, 0)
-  data['config']['controlerID'] = dict(name="Controler ID", state=controlerID)
+  data['config']['controler_id'] = dict(name="Controler ID", state=controlerID)
 
   minSetPoint0, offset = getSome("B", buff, offset)
   maxSetPoint0, offset = getSome("B", buff, offset)
@@ -18,23 +18,30 @@ def decodeConfigAnswer(buff, data):
   #if('bodies' not in data):
   #  data['bodies'] = {}
     
-  data['config']['minSetPoint'] = dict(name="Minimum Temperature", state=[minSetPoint0, minSetPoint1])
-  data['config']['maxSetPoint'] = dict(name="Maximum Temperature", state=[maxSetPoint0, maxSetPoint1])
+  data['config']['min_set_point'] = dict(name="Minimum Temperature", state=[minSetPoint0, minSetPoint1])
+  data['config']['max_set_point'] = dict(name="Maximum Temperature", state=[maxSetPoint0, maxSetPoint1])
 
   degC, offset = getSome("B", buff, offset)
-  data['config']['degC'] = dict(name="Is Celcius", state=degC)
+  data['config']['is_celcius'] = dict(name="Is Celcius", state=degC)
   
   controllerType, offset = getSome("B", buff, offset)
+  data['config']['controler_type'] = controllerType
+  
   hwType, offset = getSome("B", buff, offset)
+  data['config']['hardware_type'] = hwType
+
   controllerbuff, offset = getSome("B", buff, offset)
+  data['config']['controler_buffer'] = controllerbuff
+
   equipFlags, offset = getSome("i", buff, offset)
+  data['config']['equipment_flags'] = equipFlags
 
   paddedGenName, offset = getString(buff, offset)
   genCircuitName = paddedGenName.decode("utf-8").strip('\0')
-  data['config']['genCircuitName'] = dict(name="Default Circuit Name", state=genCircuitName)
+  data['config']['generic_circuit_name'] = dict(name="Default Circuit Name", state=genCircuitName)
          
   circuitCount , offset = getSome("I", buff, offset)
-  data['config']['circuitCount'] = dict(name="Number of Circuits", state=circuitCount)
+  data['config']['circuit_count'] = dict(name="Number of Circuits", state=circuitCount)
          
   if('circuits' not in data):
     data['circuits'] = {}
@@ -53,18 +60,36 @@ def decodeConfigAnswer(buff, data):
     data['circuits'][circuitID]['name'] = circuitName
     
     cNameIndex, offset = getSome("B", buff, offset)
+    data['circuits'][circuitID]['name_index'] = cNameIndex
+    
     cFunction, offset = getSome("B", buff, offset)
+    data['circuits'][circuitID]['function'] = cFunction
+    
     cInterface, offset = getSome("B", buff, offset)
+    data['circuits'][circuitID]['interface'] = cInterface
+    
     cFlags, offset = getSome("B", buff, offset)
+    data['circuits'][circuitID]['flags'] = cFlags
+    
     cColorSet, offset = getSome("B", buff, offset)
+    data['circuits'][circuitID]['color_set'] = cColorSet
+
     cColorPos, offset = getSome("B", buff, offset)
+    data['circuits'][circuitID]['color_position'] = cColorPos
+
     cColorStagger, offset = getSome("B", buff, offset)
+    data['circuits'][circuitID]['color_stagger'] = cColorStagger
+
     cDeviceID, offset = getSome("B", buff, offset)
+    data['circuits'][circuitID]['device_id'] = cDeviceID
+
     cDefaultRT, offset = getSome("H", buff, offset)
+    data['circuits'][circuitID]['default_rt'] = cDefaultRT
+
     offset = offset + struct.calcsize("2B")
 
   colorCount , offset = getSome("I", buff, offset)
-  data['config']['colorCount'] = dict(name="Number of Colors", state=colorCount)
+  data['config']['color_count'] = dict(name="Number of Colors", state=colorCount)
   
   if('colors' not in data['config'] or len(data['config']['colors']) != colorCount):
     data['config']['colors'] = [{} for x in range(colorCount)]
@@ -77,7 +102,20 @@ def decodeConfigAnswer(buff, data):
     rgbB, offset = getSome("I", buff, offset)
     data['config']['colors'][i] = dict(name=colorName, state=[ rgbR, rgbG, rgbB])
     
-  pumpData1 , offset = getSome("I", buff, offset)
-  pumpData2 , offset = getSome("I", buff, offset)
-  pumpData3 , offset = getSome("I", buff, offset)
-  pumpData4 , offset = getSome("I", buff, offset)
+  pumpCircuitCount = 8
+  if('pumps' not in data['config']):
+    data['config']['pumps'] = {}
+    
+  for i in range(pumpCircuitCount):
+    if(i not in data['config']['pumps']):
+      data['config']['pumps'][i] = {}
+      
+    pumpData , offset = getSome("B", buff, offset)
+    data['config']['pumps'][i]['data'] = pumpData
+    
+  interfaceTabFlags , offset = getSome("I", buff, offset)
+  data['config']['interface_tab_flags'] = interfaceTabFlags
+  
+  showAlarms , offset = getSome("I", buff, offset)
+  data['config']['show_alarms'] = showAlarms
+  

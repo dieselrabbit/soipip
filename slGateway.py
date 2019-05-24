@@ -1,6 +1,6 @@
 import socket
-from gatewayLogin import gatewayLogin
-from doQuery import queryGateway, queryConfig, queryStatus, queryButtonPress
+from gateway.gatewayLogin import gatewayLogin
+from gateway.gatewayQuery import queryGateway, queryConfig, queryStatus, queryButtonPress
 
 class slGateway:
     def __init__(self, ip, port):
@@ -25,9 +25,12 @@ class slGateway:
     def connected(self):
         return self.__connected
 
-    def getData(self, data):
+    def getConfig(self, data):
         if(self.__connected or self.connect()):
             queryConfig(self.__socket, data)
+
+    def getStatus(self, data):
+        if(self.__connected or self.connect()):
             queryStatus(self.__socket, data)
 
     def setCircuit(self, circuitID, circuitState):

@@ -14,7 +14,7 @@ import sys
 import socket
 import struct
 import ipaddress
-from constants import me
+from gateway.constants import me
 
 def discoverGateway(verbose):
   bcast = "255.255.255.255"
